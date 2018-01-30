@@ -14,7 +14,30 @@ from rpy2 import robjects
 import warnings
 from rpy2.rinterface import RRuntimeWarning
 warnings.filterwarnings( 'ignore', category=RRuntimeWarning )
+import argparse
 
+# set up argument parser
+parser = argparse.ArgumentParser(
+            description='Simulate interactions with JPRiME.')
+
+parser.add_argument( '--prefix',
+                     action   = 'store',
+                     dest     = 'prefix',
+                     required = False,
+                     help     = 'prefix name for simulations' )
+
+parser.set_defaults( prefix = 'test' )
+
+parser.add_argument( '--runs',
+                     action   = 'store',
+                     dest     = 'N',
+                     type     = int,
+                     required = False,
+                     help     = 'number of simulations to run' )
+
+parser.set_defaults( N = 10 )
+
+args = parser.parse_args()
 
 # tell R to be quiet
 robjects.r( 'options( warn = -1 )' )
@@ -42,11 +65,11 @@ def simtree( prefix,
     Time interval is always 10 units.
     '''
     
-   # make output directory
+    # make output directory
     mkdir( prefix )
-
+    
     # build the host tree
-    r = subprocess.call( [ 'java', '-jar', 'jprime.jar',
+    E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
                            'HostTreeGen', '-bi',
                            '-min', str(min_host_leafs),
                            '-max', str(max_host_leafs),
@@ -55,10 +78,10 @@ def simtree( prefix,
                            str(death_rate),
                            prefix + '/' 'host' ] )
     
-    if not r == 0 : raise( 'JPRiME failed, exiting' ) 
-
+    if not E == 0 : raise( 'JPRiME failed, exiting' ) 
+    
     # build the guest tree
-    r = subprocess.call( [ 'java', '-jar', 'jprime.jar',
+    E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
                            'GuestTreeGen',
                            '-min', str(min_guest_leafs),
                            '-max', str(max_guest_leafs),
@@ -67,9 +90,9 @@ def simtree( prefix,
                            str(loss_rate),
                            str(switch_rate),
                            prefix + '/' 'guest' ] )
-   
-    if not r == 0 : raise ( 'JPRiME failed, exiting' )
-
+    
+    if not E == 0 : raise ( 'JPRiME failed, exiting' )
+    
     # load the trees
     T1 = SuchTree( prefix + '/' + 'host.pruned.tree' )
     T2 = SuchTree( prefix + '/' + 'guest.pruned.tree' )
@@ -105,8 +128,8 @@ def simtree( prefix,
     fig = lp_plot.get_figure()
     fig.savefig( prefix + '/' + 'adjacency.png', size=6 )
     fig.clf()
-
-    # plot cophylogeny
+    
+    # plot cophylogeny using R
     r_code = '''
     tr1 <- read.tree( "HOST_TREE" )
     tr2 <- read.tree( "GUEST_TREE" )
@@ -128,7 +151,7 @@ def simtree( prefix,
                              prefix + '/' + 'cophylo.pdf' )
     robjects.r( r_code )
 
-    # calculate moments
+    # calculate spectral densities
     lambdas = SLT.spectrum()
     
     a_lambd = eigvalsh( SLT.TreeA.laplacian()['laplacian'] )
@@ -145,7 +168,7 @@ def simtree( prefix,
                             bw_method=bandwidth ).pdf( X )
     b_dnsty = gaussian_kde( b_lambd/max(b_lambd),
                             bw_method=bandwidth ).pdf( X )
-
+    
     # calculate Hommola correlation
     d = SLT.linked_distances()
     r,p = pearsonr( d['TreeA'], d['TreeB'] )
@@ -153,12 +176,13 @@ def simtree( prefix,
     with open( prefix + '/' + 'distances.txt', 'w' ) as f :
         f.write('TreeA ' + ','.join( map( str, d['TreeA'] ) ) + '\n' )
         f.write('TreeB ' + ','.join( map( str, d['TreeB'] ) ) +'\n' )
-
+    
     # save jointplot of patristic distances
     jp = seaborn.jointplot( d['TreeA'], d['TreeB'], size=6 )
     jp.savefig( prefix + '/' + 'correlation.png' )
     jp.fig.clf()
-
+    
+    # output moment data
     moments = {}
     moments['eigengap']    = lambdas[-1] - lambdas[-2]
     moments['skew']        = skew( density )
@@ -177,6 +201,7 @@ def simtree( prefix,
         f.write( ','.join( moments.keys()        ) + '\n' )
         f.write( ','.join( map( str, moments.values() ) ) )
 
+    # output simulation parameters
     data = {}
     data['prefix']           = prefix
     data['host_leafs']       = T1.n_leafs
@@ -196,10 +221,11 @@ def simtree( prefix,
         f.write( ','.join( data.keys()        ) + '\n' )
         f.write( ','.join( map( str, data.values() ) ) )
 
-p = ProgBar( 10, title='building trees...' )
+p = ProgBar( args.N, title='simulating trees...',
+             monitor=True, width=30 )
 p.update()
 
-prefix = 'test'
+prefix = args.prefix
 
 birth_rate=0.3
 death_rate=0.1
@@ -208,7 +234,7 @@ max_host_leafs=64
 min_guest_leafs=4
 max_guest_leafs=128
     
-for i in range(10) :
+for i in range( args.N ) :
     
     duplication_rate = uniform( 0.25, 0.35 )
     loss_rate        = uniform( 0.15, 0.25 )
