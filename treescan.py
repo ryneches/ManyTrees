@@ -8,6 +8,8 @@ import pandas
 from numpy import linspace, zeros
 from numpy.linalg import eigvalsh
 from scipy.stats import skew, entropy, gaussian_kde, kurtosis, pearsonr
+import matplotlib
+matplotlib.use('Agg')
 import seaborn
 seaborn.set()
 from rpy2 import robjects
