@@ -42,7 +42,7 @@ def simtree( prefix,
     Time interval is always 10 units.
     '''
     
-    # make output directory
+   # make output directory
     mkdir( prefix )
 
     # build the host tree
@@ -103,8 +103,9 @@ def simtree( prefix,
                                yticklabels=False )
     lp_plot.invert_yaxis()
     fig = lp_plot.get_figure()
-    fig.savefig( prefix + '/' + 'adjacency.png' )
-    
+    fig.savefig( prefix + '/' + 'adjacency.png', size=6 )
+    fig.clf()
+
     # plot cophylogeny
     r_code = '''
     tr1 <- read.tree( "HOST_TREE" )
@@ -144,7 +145,20 @@ def simtree( prefix,
                             bw_method=bandwidth ).pdf( X )
     b_dnsty = gaussian_kde( b_lambd/max(b_lambd),
                             bw_method=bandwidth ).pdf( X )
+
+    # calculate Hommola correlation
+    d = SLT.linked_distances()
+    r,p = pearsonr( d['TreeA'], d['TreeB'] )
     
+    with open( prefix + '/' + 'distances.txt', 'w' ) as f :
+        f.write('TreeA ' + ','.join( map( str, d['TreeA'] ) ) + '\n' )
+        f.write('TreeB ' + ','.join( map( str, d['TreeB'] ) ) +'\n' )
+
+    # save jointplot of patristic distances
+    jp = seaborn.jointplot( d['TreeA'], d['TreeB'], size=6 )
+    jp.savefig( prefix + '/' + 'correlation.png' )
+    jp.fig.clf()
+
     moments = {}
     moments['eigengap']    = lambdas[-1] - lambdas[-2]
     moments['skew']        = skew( density )
@@ -155,7 +169,10 @@ def simtree( prefix,
                                  + SLT.TreeB.n_leafs )
     moments['squareness']  = float( SLT.TreeA.n_leafs ) \
                              / SLT.TreeB.n_leafs
-    
+
+    moments['r']           = r
+    moments['p']           = p
+
     with open( prefix + '/' + 'moments.csv', 'w' ) as f :
         f.write( ','.join( moments.keys()        ) + '\n' )
         f.write( ','.join( map( str, moments.values() ) ) )
@@ -181,9 +198,46 @@ def simtree( prefix,
 
 p = ProgBar( 10, title='building trees...' )
 p.update()
+
+prefix = 'test'
+
+birth_rate=0.3
+death_rate=0.1
+min_host_leafs=8
+max_host_leafs=64
+min_guest_leafs=4
+max_guest_leafs=128
+    
 for i in range(10) :
+    
     duplication_rate = uniform( 0.25, 0.35 )
     loss_rate        = uniform( 0.15, 0.25 )
     switch_rate      = uniform( 0.0, 0.075 )
-    simtree( 'test' + str(i), switch_rate = switch_rate )
+    
+    # log simulation parameters
+    with open( prefix + '.log', 'a' ) as f :
+        f.write( prefix + str(i) + ' :\n' )
+        f.write( '   birth_rate       = ' + str(birth_rate) + '\n' )
+        f.write( '   death-rate       = ' + str(death_rate) + '\n' )
+        f.write( '   min_host_leafs   = ' + str(min_host_leafs) + '\n' )
+        f.write( '   max_host_leafs   = ' + str(max_host_leafs) + '\n' )
+        f.write( '   min_guest_leafs  = ' + str(min_guest_leafs) + '\n' )
+        f.write( '   max_guest_leafs  = ' + str(max_guest_leafs) + '\n' )
+        f.write( '   duplication_rate = ' + str(duplication_rate) + '\n' )
+        f.write( '   loss_rate        = ' + str(loss_rate) + '\n' )
+        f.write( '   switch_rate      = ' + str(switch_rate) + '\n' )
+    
+    #simtree( 'test' + str(i), switch_rate = switch_rate )
+    
+    simtree( prefix + str(i),
+             birth_rate=birth_rate,
+             death_rate=death_rate,
+             min_host_leafs=min_host_leafs,
+             max_host_leafs=max_host_leafs,
+             min_guest_leafs=min_guest_leafs,
+             max_guest_leafs=max_guest_leafs,
+             duplication_rate=duplication_rate,
+             loss_rate=loss_rate,
+             switch_rate=switch_rate )
+    
     p.update()
