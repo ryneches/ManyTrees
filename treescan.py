@@ -78,7 +78,7 @@ def simtree( prefix,
                            '10',
                            str(birth_rate),
                            str(death_rate),
-                           prefix + '/' 'host' ] )
+                           prefix + '/' + 'host' ] )
     
     if not E == 0 : raise( 'JPRiME failed, exiting' ) 
     
@@ -91,7 +91,7 @@ def simtree( prefix,
                            str(duplication_rate),
                            str(loss_rate),
                            str(switch_rate),
-                           prefix + '/' 'guest' ] )
+                           prefix + '/' + 'guest' ] )
     
     if not E == 0 : raise ( 'JPRiME failed, exiting' )
     
