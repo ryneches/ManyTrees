@@ -62,7 +62,9 @@ def simtree( prefix,
              max_guest_leafs=128,
              duplication_rate=0.2,
              loss_rate=0.1,
-             switch_rate=0.05 ) :
+             switch_rate=0.05,
+             k=2.0,
+             theta=0.5) :
     '''
     Time interval is always 10 units.
     '''
@@ -80,7 +82,13 @@ def simtree( prefix,
                            str(death_rate),
                            prefix + '/' + 'host' ] )
     
-    if not E == 0 : raise( 'JPRiME failed, exiting' ) 
+    E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
+                           'BranchRelaxer',
+                           '-o', prefix + '/' + 'host.relaxed.tree',
+                           prefix + '/' + 'host.pruned.tree',
+                           'IIDGamma', str(k), str(theta) ] )
+    
+    if not E == 0 : raise( 'JPRiME failed, exiting' )
     
     # build the guest tree
     E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
@@ -93,11 +101,19 @@ def simtree( prefix,
                            str(switch_rate),
                            prefix + '/' + 'guest' ] )
     
+    if not E == 0 : raise( 'JPRiME failed, exiting' )
+    
+    E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
+                           'BranchRelaxer',
+                           '-o', prefix + '/' + 'guest.relaxed.tree',
+                           prefix + '/' + 'guest.pruned.tree',
+                           'IIDGamma', str(k), str(theta) ] )
+
     if not E == 0 : raise ( 'JPRiME failed, exiting' )
     
     # load the trees
-    T1 = SuchTree( prefix + '/' + 'host.pruned.tree' )
-    T2 = SuchTree( prefix + '/' + 'guest.pruned.tree' )
+    T1 = SuchTree( prefix + '/' + 'host.relaxed.tree' )
+    T2 = SuchTree( prefix + '/' + 'guest.relaxed.tree' )
     
     # populate the link matrix using the leaf names
     l = zeros( ( T1.n_leafs, T2.n_leafs ), dtype=int )
@@ -144,9 +160,9 @@ def simtree( prefix,
     dev.off()
     '''
     r_code = r_code.replace( 'HOST_TREE',
-                             prefix + '/' + 'host.pruned.tree' )
+                             prefix + '/' + 'host.relaxed.tree' )
     r_code = r_code.replace( 'GUEST_TREE',
-                             prefix + '/' + 'guest.pruned.tree' )
+                             prefix + '/' + 'guest.relaxed.tree' )
     r_code = r_code.replace( 'LINKS',
                              prefix + '/' + 'links.csv' )
     r_code = r_code.replace( 'OUTFILE',
@@ -225,7 +241,9 @@ def simtree( prefix,
     data['duplication_rate'] = duplication_rate
     data['loss_rate']        = loss_rate
     data['switch_rate']      = switch_rate
-    
+    data['k']                = k
+    data['theta']            = theta
+
     with open( prefix + '/' + 'data.csv', 'w' ) as f :
         f.write( ','.join( data.keys()        ) + '\n' )
         f.write( ','.join( map( str, data.values() ) ) )
@@ -242,11 +260,13 @@ min_host_leafs=8
 max_host_leafs=64
 min_guest_leafs=4
 max_guest_leafs=128
+k=2.0
+theta=0.5
     
 for i in range( args.N ) :
     
     duplication_rate = uniform( 0.25, 0.35 )
-    loss_rate        = uniform( 0.15, 0.25 )
+    loss_rate        = uniform( 0.0, 0.25 )
     switch_rate      = uniform( 0.0, 0.075 )
     
     # log simulation parameters
@@ -261,6 +281,8 @@ for i in range( args.N ) :
         f.write( '   duplication_rate = ' + str(duplication_rate) + '\n' )
         f.write( '   loss_rate        = ' + str(loss_rate) + '\n' )
         f.write( '   switch_rate      = ' + str(switch_rate) + '\n' )
+        f.write( '   k                = ' + str(k) + '\n' )
+        f.write( '   theta            = ' + str(theta) + '\n' )
     
     #simtree( 'test' + str(i), switch_rate = switch_rate )
     
@@ -273,6 +295,8 @@ for i in range( args.N ) :
              max_guest_leafs=max_guest_leafs,
              duplication_rate=duplication_rate,
              loss_rate=loss_rate,
-             switch_rate=switch_rate )
+             switch_rate=switch_rate,
+             k=k,
+             theta=theta )
     
     p.update()
