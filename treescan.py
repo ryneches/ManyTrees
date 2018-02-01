@@ -160,8 +160,10 @@ def simtree( prefix,
     b_lambd = eigvalsh( SLT.TreeB.laplacian()['laplacian'] )
     
     with open( prefix + '/' + 'eigenvalues.csv', 'w' ) as f :
-        f.write( ','.join( map( str, lambdas ) ) )
-    
+        f.write( 'graph ' + ','.join( map( str, lambdas ) ) + '\n' )
+        f.write( 'TreeA ' + ','.join( map( str, a_lambd ) ) + '\n' )
+        f.write( 'TreeB ' + ','.join( map( str, b_lambd ) ) + '\n' )
+
     bandwidth = 0.4
     X = linspace( -0.5, 1.5, 200 )
     density = gaussian_kde( lambdas/max(lambdas),
@@ -171,6 +173,11 @@ def simtree( prefix,
     b_dnsty = gaussian_kde( b_lambd/max(b_lambd),
                             bw_method=bandwidth ).pdf( X )
     
+    with open( prefix + '/' + 'densities.txt', 'w' ) as f :
+        f.write( 'graph ' + ','.join( map( str, density ) ) + '\n' )
+        f.write( 'TreeA ' + ','.join( map( str, a_dnsty ) ) + '\n' )
+        f.write( 'TreeB ' + ','.join( map( str, b_dnsty ) ) + '\n' )
+
     # calculate Hommola correlation
     d = SLT.linked_distances()
     r,p = pearsonr( d['TreeA'], d['TreeB'] )
