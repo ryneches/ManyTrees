@@ -49,6 +49,9 @@ robjects.r( 'sink( "/dev/null" )' )
 robjects.r( 'library("phytools")' )
 robjects.r( 'library("igraph")' )
 
+class JPrIMEError(Exception) :
+    pass
+
 def pdd( a, b ) :
     '''Jensen-Shannon distance'''
     return ( 0.5 * entropy( a, b ) + 0.5 * entropy( b, a ) )**(0.5)
@@ -71,7 +74,7 @@ def simtree( prefix,
     
     # make output directory
     mkdir( prefix )
-    
+   
     # build the host tree
     E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
                            'HostTreeGen', '-bi',
@@ -82,13 +85,15 @@ def simtree( prefix,
                            str(death_rate),
                            prefix + '/' + 'host' ] )
     
+    if not E == 0 : raise JPrIMEError( 'HostTreeGen failed.' )
+    
     E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
                            'BranchRelaxer',
                            '-o', prefix + '/' + 'host.relaxed.tree',
                            prefix + '/' + 'host.pruned.tree',
                            'IIDGamma', str(k), str(theta) ] )
     
-    if not E == 0 : raise( 'JPRiME failed, exiting' )
+    if not E == 0 : raise JPrIMEError( 'BranchRelaxer failed on host tree.' )
     
     # build the guest tree
     E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
@@ -101,15 +106,15 @@ def simtree( prefix,
                            str(switch_rate),
                            prefix + '/' + 'guest' ] )
     
-    if not E == 0 : raise( 'JPRiME failed, exiting' )
+    if not E == 0 : raise JPrIMEError( 'GuestTreGen failed.' )
     
     E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
                            'BranchRelaxer',
                            '-o', prefix + '/' + 'guest.relaxed.tree',
                            prefix + '/' + 'guest.pruned.tree',
                            'IIDGamma', str(k), str(theta) ] )
-
-    if not E == 0 : raise ( 'JPRiME failed, exiting' )
+    
+    if not E == 0 : raise JPrIMEError( 'BranchRelaxer failed on guest tree.' )
     
     # load the trees
     T1 = SuchTree( prefix + '/' + 'host.relaxed.tree' )
@@ -123,7 +128,7 @@ def simtree( prefix,
     
     for L in T2.leafs.keys() :
         guest, host = L.split('_')
-        host = 'H' + host
+        #host = 'H' + host
         i = hostnames.index( host )
         j = guestnames.index( L )
         l[i,j] = 1
@@ -262,7 +267,7 @@ min_guest_leafs=4
 max_guest_leafs=128
 k=2.0
 theta=0.5
-    
+
 for i in range( args.N ) :
     
     duplication_rate = uniform( 0.25, 0.35 )
@@ -286,17 +291,23 @@ for i in range( args.N ) :
     
     #simtree( 'test' + str(i), switch_rate = switch_rate )
     
-    simtree( prefix + str(i),
-             birth_rate=birth_rate,
-             death_rate=death_rate,
-             min_host_leafs=min_host_leafs,
-             max_host_leafs=max_host_leafs,
-             min_guest_leafs=min_guest_leafs,
-             max_guest_leafs=max_guest_leafs,
-             duplication_rate=duplication_rate,
-             loss_rate=loss_rate,
-             switch_rate=switch_rate,
-             k=k,
-             theta=theta )
-    
+    try :
+        simtree( prefix + str(i),
+                 birth_rate=birth_rate,
+                 death_rate=death_rate,
+                 min_host_leafs=min_host_leafs,
+                 max_host_leafs=max_host_leafs,
+                 min_guest_leafs=min_guest_leafs,
+                 max_guest_leafs=max_guest_leafs,
+                 duplication_rate=duplication_rate,
+                 loss_rate=loss_rate,
+                 switch_rate=switch_rate,
+                 k=k,
+                theta=theta )
+    except JPrIMEError as jpe :
+        with open( prefix + '/' + '.log', 'a' ) as f :
+            f.write( '    FAILED : ' + str(jpe) + '\n' )
+        with open( prefix + str(i) + '/' + 'fail.msg', 'w' ) as f :
+            f.write( str(jpe) )
+
     p.update()
