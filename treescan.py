@@ -305,7 +305,7 @@ for i in range( args.N ) :
                  k=k,
                 theta=theta )
     except JPrIMEError as jpe :
-        with open( prefix + '/' + '.log', 'a' ) as f :
+        with open( prefix + '.log', 'a' ) as f :
             f.write( '    FAILED : ' + str(jpe) + '\n' )
         with open( prefix + str(i) + '/' + 'fail.msg', 'w' ) as f :
             f.write( str(jpe) )
