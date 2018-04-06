@@ -290,7 +290,7 @@ if args.config :
 
 else :
     
-    prefix = args.prefix
+    run_dir = args.prefix
     
     birth_rate=0.05
     death_rate=0.01
@@ -306,7 +306,13 @@ else :
     k=2.0
     theta=0.5
 
-for i in range( args.N ) :
+# let the command line option override the config
+if args.N :
+    replicates = args.N
+else :
+    replicates = N
+
+for i in range( replicates ) :
     
     #duplication_rate = uniform( 0.05, 0.35 )
     #loss_rate        = uniform( 0.0, 0.25 )

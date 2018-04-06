@@ -1,0 +1,16 @@
+{ "run_dir"          : "noswitch_balanced",
+  "N"                : 1000,
+
+  "birth_rate"       : 0.05,
+  "death_rate"       : 0.01,
+  "min_host_leafs"   : 8,
+  "max_host_leafs"   : 128,
+  
+  "duplication_rate" : 0.05,
+  "loss_rate"        : 0.01,
+  "switch_rate"      : 0,
+  "min_guest_leafs"  : 4,
+  "max_guest_leafs"  : 128,
+  
+  "k"                : 2.0,
+  "theta"            : 0.5 }
