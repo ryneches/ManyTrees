@@ -3,6 +3,7 @@ import subprocess
 from pyprind import ProgBar
 from random import uniform
 from os import mkdir
+from os.path import exists, join
 from SuchTree import SuchTree, SuchLinkedTrees
 import pandas
 from numpy import linspace, zeros
@@ -17,10 +18,17 @@ import warnings
 from rpy2.rinterface import RRuntimeWarning
 warnings.filterwarnings( 'ignore', category=RRuntimeWarning )
 import argparse
+import json
 
 # set up argument parser
 parser = argparse.ArgumentParser(
             description='Simulate interactions with JPRiME.')
+
+parser.add_argument( '--config',
+                     action   = 'store',
+                     dest     = 'config',
+                     required = False,
+                     help     = 'run config file, JSON' )
 
 parser.add_argument( '--prefix',
                      action   = 'store',
@@ -73,7 +81,8 @@ def simtree( prefix,
     '''
     
     # make output directory
-    mkdir( prefix )
+    if not exists( prefix ) :
+        mkdir( prefix )
    
     # build the host tree
     E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
@@ -257,22 +266,55 @@ p = ProgBar( args.N, title='simulating trees...',
              monitor=True, width=30 )
 p.update()
 
-prefix = args.prefix
+if args.config :
+    config = json.load( open( args.config ) )
 
-birth_rate=0.3
-death_rate=0.1
-min_host_leafs=8
-max_host_leafs=64
-min_guest_leafs=4
-max_guest_leafs=128
-k=2.0
-theta=0.5
+    # host tree parameters
+    run_dir        = config['run_dir']
+    N              = config['N']
+    birth_rate     = config['birth_rate']
+    death_rate     = config['death_rate']
+    min_host_leafs = config['min_host_leafs']
+    max_host_leafs = config['max_host_leafs']
+    
+    # guest tree parameters
+    duplication_rate = config['duplication_rate']
+    loss_rate        = config['loss_rate']
+    switch_rate      = config['switch_rate']
+    min_guest_leafs  = config['min_guest_leafs']
+    max_guest_leafs  = config['max_guest_leafs']
+    
+    # branch relaxer parameters
+    k                = config['k']
+    theta            = config['theta']
+
+else :
+    
+    prefix = args.prefix
+    
+    birth_rate=0.05
+    death_rate=0.01
+    min_host_leafs=8
+    max_host_leafs=128
+    
+    duplication_rate=birth_rate*2.0
+    loss_rate=death_rate*2.0
+    switch_rate=birth_rate
+    min_guest_leafs=4
+    max_guest_leafs=128
+    
+    k=2.0
+    theta=0.5
 
 for i in range( args.N ) :
     
-    duplication_rate = uniform( 0.25, 0.35 )
-    loss_rate        = uniform( 0.0, 0.25 )
-    switch_rate      = uniform( 0.0, 0.075 )
+    #duplication_rate = uniform( 0.05, 0.35 )
+    #loss_rate        = uniform( 0.0, 0.25 )
+    #switch_rate      = uniform( 0.0, 0.075 )
+    
+    if not exists( run_dir ) :
+        mkdir( run_dir )
+    prefix = join( run_dir, 'run' )
     
     # log simulation parameters
     with open( prefix + '.log', 'a' ) as f :
