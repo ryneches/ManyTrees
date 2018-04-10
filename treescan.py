@@ -21,7 +21,9 @@ import argparse
 import json
 
 # java options
-java_ops = [ '-XX:+UseRTMLocking', '-XX:+AggressiveOpts', '-XX:ConcGCThreads=1' ]
+#java_ops = [ '-XX:+UseRTMLocking', '-XX:+AggressiveOpts', '-XX:ConcGCThreads=1' ]
+java_ops = [ '-XX:+AggressiveOpts', '-XX:ConcGCThreads=1' ]
+
 
 # set up argument parser
 parser = argparse.ArgumentParser(
