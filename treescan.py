@@ -20,6 +20,9 @@ warnings.filterwarnings( 'ignore', category=RRuntimeWarning )
 import argparse
 import json
 
+# java options
+java_ops = [ '-XX:+UseRTMLocking', '-XX:+AggressiveOpts', '-XX:ConcGCThreads=1' ]
+
 # set up argument parser
 parser = argparse.ArgumentParser(
             description='Simulate interactions with JPRiME.')
@@ -46,6 +49,13 @@ parser.add_argument( '--runs',
                      help     = 'number of simulations to run' )
 
 parser.set_defaults( N = 10 )
+
+parser.add_argument( '--start-at-run',
+                     action   = 'store',
+                     dest     = 'startN',
+                     type     = int,
+                     required = False,
+                     help     = 'enumerate runs from N' )
 
 args = parser.parse_args()
 
@@ -85,7 +95,7 @@ def simtree( prefix,
         mkdir( prefix )
    
     # build the host tree
-    E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
+    E = subprocess.call( [ 'java' ] + java_ops + [ '-jar', 'jprime.jar',
                            'HostTreeGen', '-bi',
                            '-min', str(min_host_leafs),
                            '-max', str(max_host_leafs),
@@ -96,7 +106,7 @@ def simtree( prefix,
     
     if not E == 0 : raise JPrIMEError( 'HostTreeGen failed.' )
     
-    E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
+    E = subprocess.call( [ 'java' ] + java_ops + [ '-jar', 'jprime.jar',
                            'BranchRelaxer',
                            '-o', prefix + '/' + 'host.relaxed.tree',
                            prefix + '/' + 'host.pruned.tree',
@@ -105,7 +115,7 @@ def simtree( prefix,
     if not E == 0 : raise JPrIMEError( 'BranchRelaxer failed on host tree.' )
     
     # build the guest tree
-    E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
+    E = subprocess.call( [ 'java' ] + java_ops + [ '-jar', 'jprime.jar',
                            'GuestTreeGen',
                            '-min', str(min_guest_leafs),
                            '-max', str(max_guest_leafs),
@@ -117,7 +127,7 @@ def simtree( prefix,
     
     if not E == 0 : raise JPrIMEError( 'GuestTreGen failed.' )
     
-    E = subprocess.call( [ 'java', '-jar', 'jprime.jar',
+    E = subprocess.call( [ 'java' ] + java_ops + [ '-jar', 'jprime.jar',
                            'BranchRelaxer',
                            '-o', prefix + '/' + 'guest.relaxed.tree',
                            prefix + '/' + 'guest.pruned.tree',
@@ -312,7 +322,12 @@ if args.N :
 else :
     replicates = N
 
-for i in range( replicates ) :
+if not args.startN :
+    startN = 0
+else :
+    startN = int(args.startN)
+
+for i in range( args.startN, replicates + args.startN ) :
     
     #duplication_rate = uniform( 0.05, 0.35 )
     #loss_rate        = uniform( 0.0, 0.25 )
