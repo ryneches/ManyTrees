@@ -1,15 +1,15 @@
-{ "run_dir"          : "noswitch_fast",
+{ "run_dir"          : "simulations/noswitch_fast",
   "N"                : 1000,
 
   "birth_rate"       : 0.05,
   "death_rate"       : 0.01,
-  "min_host_leafs"   : 8,
+  "min_host_leafs"   : 10,
   "max_host_leafs"   : 128,
   
   "duplication_rate" : 0.20,
   "loss_rate"        : 0.04,
   "switch_rate"      : 0,
-  "min_guest_leafs"  : 4,
+  "min_guest_leafs"  : 8,
   "max_guest_leafs"  : 128,
   
   "k"                : 2.0,

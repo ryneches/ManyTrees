@@ -1,15 +1,15 @@
-{ "run_dir"          : "slowswitch_slow",
+{ "run_dir"          : "simulations/slowswitch_slow",
   "N"                : 1000,
 
   "birth_rate"       : 0.05,
   "death_rate"       : 0.01,
-  "min_host_leafs"   : 8,
+  "min_host_leafs"   : 10,
   "max_host_leafs"   : 128,
   
   "duplication_rate" : 0.0125,
   "loss_rate"        : 0.0025,
   "switch_rate"      : 0.01,
-  "min_guest_leafs"  : 4,
+  "min_guest_leafs"  : 8,
   "max_guest_leafs"  : 128,
   
   "k"                : 2.0,

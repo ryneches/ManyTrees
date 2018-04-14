@@ -2,7 +2,7 @@
 import subprocess
 from pyprind import ProgBar
 from random import uniform
-from os import mkdir
+from os import mkdir, makedirs
 from os.path import exists, join
 from SuchTree import SuchTree, SuchLinkedTrees
 import pandas
@@ -58,6 +58,8 @@ parser.add_argument( '--start-at-run',
                      type     = int,
                      required = False,
                      help     = 'enumerate runs from N' )
+
+parser.set_defaults( startN = 0 )
 
 args = parser.parse_args()
 
@@ -336,7 +338,7 @@ for i in range( args.startN, replicates + args.startN ) :
     #switch_rate      = uniform( 0.0, 0.075 )
     
     if not exists( run_dir ) :
-        mkdir( run_dir )
+        makedirs( run_dir )
     prefix = join( run_dir, 'run' )
     
     # log simulation parameters
