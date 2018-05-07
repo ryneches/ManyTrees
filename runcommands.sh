@@ -1,9 +1,4 @@
-./treescan.py --runs 200 --config simulation_configs/fastswitch_fast.json
-./treescan.py --runs 200 --config simulation_configs/slowswitch_slow.json
-./treescan.py --runs 200 --config simulation_configs/fastswitch_balanced.json
-./treescan.py --runs 200 --config simulation_configs/fastswitch_slow.json
-./treescan.py --runs 200 --config simulation_configs/slowswitch_balanced.json
-./treescan.py --runs 200 --config simulation_configs/noswitch_balanced.json
-./treescan.py --runs 200 --config simulation_configs/slowswitch_fast.json
-./treescan.py --runs 200 --config simulation_configs/noswitch_fast.json
-./treescan.py --runs 200 --config simulation_configs/noswitch_slow.json
+./treescan.py --config simulation_configs/fastswitch_fast.json
+./treescan.py --config simulation_configs/fastswitch_slow.json
+./treescan.py --config simulation_configs/slowswitch_fast.json
+./treescan.py --config simulation_configs/slowswitch_slow.json

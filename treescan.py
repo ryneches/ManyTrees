@@ -91,19 +91,22 @@ def simtree( prefix,
              k=2.0,
              theta=0.5) :
     '''
-    Time interval is always 10 units.
+    Time interval is always 1.0 units, and GuestTreeGen stops after 1000
+    attempts.
     '''
+    
+    max_guest_attempts = 1000
     
     # make output directory
     if not exists( prefix ) :
         mkdir( prefix )
-   
+    
     # build the host tree
     E = subprocess.call( [ 'java' ] + java_ops + [ '-jar', 'jprime.jar',
                            'HostTreeGen', '-bi',
                            '-min', str(min_host_leafs),
                            '-max', str(max_host_leafs),
-                           '10',
+                           '1.0',
                            str(birth_rate),
                            str(death_rate),
                            prefix + '/' + 'host' ] )
@@ -121,6 +124,7 @@ def simtree( prefix,
     # build the guest tree
     E = subprocess.call( [ 'java' ] + java_ops + [ '-jar', 'jprime.jar',
                            'GuestTreeGen',
+                           '--max-attempts', str(max_guest_attempts),
                            '-min', str(min_guest_leafs),
                            '-max', str(max_guest_leafs),
                            prefix + '/' + 'host.pruned.tree',
